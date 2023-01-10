@@ -31,7 +31,7 @@ canvas {
 let w = 30, h = 16; // dimensions of game area
 let num = 99; // number of mines
 let f = 0; // number of flipped squares
-let m = 99; // number of flagged mines remaining
+let m = 0; // number of flagged mines remaining
 let active = true;
 let mousePos = [0, 0]
 const g = startGrid()
@@ -56,19 +56,19 @@ function setBlocks(grid, flipped=[], start) {
     const b = new Image()
     b.src = 'block.png';
     const one = new Image()
-    one.src = 'one.png';
+    one.src = '1c.png';
     const two = new Image()
-    two.src = 'two.png';
+    two.src = '2a.png';
     const three = new Image()
-    three.src = 'three.png';
+    three.src = '3a.png';
     const four = new Image()
-    four.src = 'four.png';
+    four.src = '4a.png';
     const five = new Image()
-    five.src = 'five.png';
+    five.src = '5a.png';
     const six = new Image()
-    six.src = 'six.png';
+    six.src = '6a.png';
     const seven = new Image()
-    seven.src = 'seven.png';
+    seven.src = '7a.png';
     const mine = new Image()
     mine.src = 'm.png';
     const blank = new Image()
@@ -110,12 +110,22 @@ function setBlocks(grid, flipped=[], start) {
 }
 
 function setMines(n) {
-    const mines = []
-    while (mines.length < n) {
-        var m = Math.floor(Math.random() * h*w) + 1;
-        if (! mines.includes(m)) {
-            mines.push(m)
+    var count = 0
+    const mines = {}
+    while (count < n) {
+        // var m = Math.floor(Math.random() * h*w) + 1;
+        var x = Math.floor(Math.random() * w)
+        var y = Math.floor(Math.random() * h)
+        if (! (x in mines)) {
+            mines[x] = [y]
+            count += 1
+        } else if (x in mines && ! (mines[x].includes(y))) {
+            mines[x].push(y)
+            count += 1
         }
+        // if (! mines.includes([x, y])) {
+        //     mines.push([x, y])
+        // }
     }
     return mines
 }
@@ -123,18 +133,23 @@ function setMines(n) {
 function blankGrid() {
     // initializes blank grid with mines
     const grid = []
-    var mines = setMines(num)
+    const mines = setMines(num)
+    // document.write(mines)
     for (let i = 0; i < h; i++) {
         grid.push([])
         for (let j = 0; j < w; j++) {
-            var ix = i*h+j+1
-            if (mines.includes(ix)) {
+            // var ix = i*h+j+1
+            const coords = [j, i]
+            // document.write(coords)
+            if (mines[j].includes(i)) {
                 grid[i].push([j, i, 8, 0, 0, 0])
+                m += 1
             } else {
                 grid[i].push([j, i, 0, 0, 0, 0])
             }
         }
     }
+    // document.write(grid)
     return grid
 }
 
