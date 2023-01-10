@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<style>
+canvas {
+    border: 1px solid #d3d3d3;
+    background-color: #f1f1f1;
+    position: 'absolute';
+    top: '100px';
+    left: '100px';
+    padding: '100px';
+}
+</style>
+</head>
+<body onload="startGame()">
+
+<!-- <body> -->
+
+<h2>Minesweeper</h2>
+<h3 id = 'state'></h3>
+<p>Mine count: </p> <p id = 'minecount'></p>
+
+
+<script>
+// square id: [x, y, # of mines, flipped, changeflag, flag status]
+// 0 = not flipped, 0 = no flag change, 0 = not flagged
+// document.addEventListener('load', startGame);
+
+let w = 30, h = 16; // dimensions of game area
+let num = 99; // number of mines
+let f = 0; // number of flipped squares
+let m = 99; // number of flagged mines remaining
+let active = true;
+let mousePos = [0, 0]
+const g = startGrid()
+
+function startGame() {
+    gameArea.start();
+    setBlocks(g, [], 0);
+}
+
+var gameArea = {
+    newCanvas : document.createElement('canvas'),
+    start: function() {
+        this.newCanvas.width = w*15;
+        this.newCanvas.height = h*15;
+        this.context = this.newCanvas.getContext('2d');
+        document.body.insertBefore(this.newCanvas, document.body.childNodes[0]);
+    }
+}
+
+function setBlocks(grid, flipped=[], start) {
+    var ctx = gameArea.context;
+    const b = new Image()
+    b.src = 'block.png';
+    const one = new Image()
+    one.src = 'one.png';
+    const two = new Image()
+    two.src = 'two.png';
+    const three = new Image()
+    three.src = 'three.png';
+    const four = new Image()
+    four.src = 'four.png';
+    const five = new Image()
+    five.src = 'five.png';
+    const six = new Image()
+    six.src = 'six.png';
+    const seven = new Image()
+    seven.src = 'seven.png';
+    const mine = new Image()
+    mine.src = 'm.png';
+    const blank = new Image()
+    blank.src = 'ack.png'
+    const flag = new Image()
+    flag.src = 'flag.png'
+    const values = {0: blank, 1: one, 2: two, 3: three, 4: four, 5: five, 6: six, 7: seven, 8: mine}
+    if (start == 0 && flipped.length == 0) {
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                ctx.drawImage(b, i*15, j*15, 15, 15)
+            }
+        }
+    } else if (start == 2) {
+        for (let i = 0; i < w; i++) {
+            for (let j = 0; j < h; j++) {
+                var cur = values[grid[j][i][2]]
+                ctx.drawImage(cur, i*15, j*15, 15, 15)
+            }
+        }
+    } else if (grid[flipped[0][1]][flipped[0][0]][4] == 1) {
+        const i = flipped[0]
+        if (grid[i[1]][i[0]][5] == 1) {
+            ctx.drawImage(flag, i[0]*15, i[1]*15, 15, 15)
+            m -= 1
+        } else if (grid[i[1]][i[0]][5] == 0) {
+            ctx.drawImage(b, i[0]*15, i[1]*15, 15, 15)
+            m += 1
+        }
+        grid[i[1]][i[0]][4] = 0 // reset change flag
+    } else {
+        f += flipped.length
+        for (const i of flipped) {
+            var cur = values[grid[i[1]][i[0]][2]]
+            ctx.drawImage(cur, i[0]*15, i[1]*15, 15, 15)
+        }
+    }
+    document.getElementById('minecount').innerHTML = m
+}
+
+function setMines(n) {
+    const mines = []
+    while (mines.length < n) {
+        var m = Math.floor(Math.random() * h*w) + 1;
+        if (! mines.includes(m)) {
+            mines.push(m)
+        }
+    }
+    return mines
+}
+
+function blankGrid() {
+    // initializes blank grid with mines
+    const grid = []
+    var mines = setMines(num)
+    for (let i = 0; i < h; i++) {
+        grid.push([])
+        for (let j = 0; j < w; j++) {
+            var ix = i*h+j+1
+            if (mines.includes(ix)) {
+                grid[i].push([j, i, 8, 0, 0, 0])
+            } else {
+                grid[i].push([j, i, 0, 0, 0, 0])
+            }
+        }
+    }
+    return grid
+}
+
+function getNeighbors(coords) {
+    const neighbors = []
+    const dir = [-1, 0, 1]
+    for (const d of dir) {
+        for (const f of dir) {
+            var x = coords[0] + d
+            var y = coords[1] + f
+            if (x < w && x >= 0 && y < h && y >= 0 && (! (x == coords[0] && y == coords[1]))) {
+                neighbors.push([x, y])
+            }
+        }
+    }
+    return neighbors
+}
+
+function startGrid() {
+    // initializes grid with correct values of squares based on mine placement
+    const grid = blankGrid()
+    var l = grid.length
+    for (let i = 0; i < l; i++) {
+        const row = grid[i]
+        for (const j of row) {
+            if (j[2] == 8) {
+                continue
+            }
+            const n = getNeighbors([j[0], j[1]])
+            var count = 0
+            for (const k of n) {
+                if (grid[k[1]][k[0]][2] == 8) {
+                    count += 1
+                }
+            }
+            grid[j[1]][j[0]][2] = count
+        }
+    }
+    return grid
+}
+
+function click(grid) {
+    // updates the game visually using setBlocks, checks for win
+    const coords = [mousePos[0], mousePos[1]]
+
+    if (grid[coords[1]][coords[0]][5] == 1) {
+    
+    } else if (active == true) {
+        const newGrid = updateGame(coords, grid)
+        setBlocks(newGrid[0], newGrid[1], 1)
+        if (f == h*w-num) {
+            setBlocks(newGrid[0], [], 2)
+            active = false
+            document.getElementById('state').innerHTML = 'Win'
+        }
+    }
+}
+
+function updateGame(coords, grid, flipped=[]) {
+    // updates the grid given coordinates that are clicked
+    if (grid[coords[1]][coords[0]][2] == 8)  {
+        setBlocks(grid, [], 2)
+        active = false
+        document.getElementById('state').innerHTML = 'Lose' // check lose
+    } else if (grid[coords[1]][coords[0]][2] != 8 && grid[coords[1]][coords[0]][2] != 0 && grid[coords[1]][coords[0]][3] == 0) {
+        grid[coords[1]][coords[0]][3] = 1
+        flipped.push(coords)
+    } else if (grid[coords[1]][coords[0]][3] == 0 && grid[coords[1]][coords[0]][3] == 0) {
+        grid[coords[1]][coords[0]][3] = 1
+        flipped.push(coords)
+        const n = getNeighbors(coords)
+        for (const i of n) {
+            out = updateGame(i, grid, flipped)
+            grid = out[0]
+            flipped = out[1]
+        }
+    }
+    return [grid, flipped]
+}
+
+function space(event, grid, flipped=[]) {
+  var x = event.code;
+  if (x == 'Space') {
+    const coords = [mousePos[0], mousePos[1]]
+    if (grid[coords[1]][coords[0]][3] == 0 && grid[coords[1]][coords[0]][5] == 0) { // if not flipped and not flagged
+        grid[coords[1]][coords[0]][4] = 1 // mark as needing to be changed
+        grid[coords[1]][coords[0]][5] = 1
+        flipped.push(coords)
+    } else if (grid[coords[1]][coords[0]][3] == 0 && grid[coords[1]][coords[0]][5] == 1) { // if not flipped and flagged
+        grid[coords[1]][coords[0]][4] = 1
+        grid[coords[1]][coords[0]][5] = 0
+        flipped.push(coords)
+    } else { // if flipped
+        const n = getNeighbors(coords)
+        var count = 0
+        for (const i of n) {
+            if (grid[i[1]][i[0]][5] == 1) {
+                count += 1
+            }
+        }
+        if (count == grid[coords[1]][coords[0]][2]) {
+            for (const i of n) {
+                // if (grid[i[1]][i[0]][5] == 1 && grid[i[1]][i[0]][2] != 8) {
+                //     setBlocks(grid, [], 2)
+                //     active = false
+                //     document.getElementById('state').innerHTML = 'Lose' // trigger lose
+                // } else 
+                if (grid[i[1]][i[0]][5] == 0) { // flips each surrounding square if not flagged
+                    newGrid = updateGame(i, grid)
+                    grid = newGrid[0]
+                    flipped = flipped.concat(newGrid[1])
+                }
+            }
+        }
+    }
+    setBlocks(grid, flipped, 1)
+    if (f == h*w-num) { // check win
+        setBlocks(newGrid[0], [], 2)
+        active = false
+        document.getElementById('state').innerHTML = 'Win'
+    }
+    // console.log('Coords: ' + coords)
+  }
+}
+
+function mouseMove(canvas, event) {
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+    const coords = [Math.floor(x/15), Math.floor(y/15)]
+    mousePos[0] = coords[0]
+    mousePos[1] = coords[1]
+}
+
+gameArea.newCanvas.addEventListener('click', function() {click(g)})
+
+document.addEventListener('keydown', function(e) {space(e, g)})
+
+gameArea.newCanvas.addEventListener('mousemove', function(e) {mouseMove(gameArea.newCanvas, e)})
+
+window.onkeydown = function(e) {return !(e.keyCode == 32)}
+
+</script>
+
+
+</body>
+</html>
