@@ -18,6 +18,8 @@ canvas {
 
 <!-- <body> -->
 
+<!-- <button onclick="restartGame()">Restart</button> -->
+
 <h2>Minesweeper</h2>
 <h3 id = 'state'></h3>
 <p>Mine count: </p> <p id = 'minecount'></p>
@@ -37,9 +39,19 @@ let mousePos = [0, 0]
 const g = startGrid()
 
 function startGame() {
-    gameArea.start();
-    setBlocks(g, [], 0);
+    gameArea.start()
+    setBlocks(g, [], 0)
 }
+
+// function restartGame() {
+//     f = 0
+//     m = 0
+//     active = true
+//     document.getElementById('state').innerHTML = ''
+//     g = startGrid()
+//     gameArea.start()
+//     setBlocks(g, [], 0)
+// }
 
 var gameArea = {
     newCanvas : document.createElement('canvas'),
@@ -69,13 +81,15 @@ function setBlocks(grid, flipped=[], start) {
     six.src = '6a.png';
     const seven = new Image()
     seven.src = '7a.png';
+    const eight = new Image()
+    eight.src = '8.png';
     const mine = new Image()
     mine.src = 'm.png';
     const blank = new Image()
     blank.src = 'ack.png'
     const flag = new Image()
     flag.src = 'flag.png'
-    const values = {0: blank, 1: one, 2: two, 3: three, 4: four, 5: five, 6: six, 7: seven, 8: mine}
+    const values = {0: blank, 1: one, 2: two, 3: three, 4: four, 5: five, 6: six, 7: seven, 8: eight, 9: mine}
     if (start == 0 && flipped.length == 0) {
         for (let i = 0; i < w; i++) {
             for (let j = 0; j < h; j++) {
@@ -142,7 +156,7 @@ function blankGrid() {
             const coords = [j, i]
             // document.write(coords)
             if (mines[j].includes(i)) {
-                grid[i].push([j, i, 8, 0, 0, 0])
+                grid[i].push([j, i, 9, 0, 0, 0])
                 m += 1
             } else {
                 grid[i].push([j, i, 0, 0, 0, 0])
@@ -175,13 +189,13 @@ function startGrid() {
     for (let i = 0; i < l; i++) {
         const row = grid[i]
         for (const j of row) {
-            if (j[2] == 8) {
+            if (j[2] == 9) {
                 continue
             }
             const n = getNeighbors([j[0], j[1]])
             var count = 0
             for (const k of n) {
-                if (grid[k[1]][k[0]][2] == 8) {
+                if (grid[k[1]][k[0]][2] == 9) {
                     count += 1
                 }
             }
@@ -210,11 +224,11 @@ function click(grid) {
 
 function updateGame(coords, grid, flipped=[]) {
     // updates the grid given coordinates that are clicked
-    if (grid[coords[1]][coords[0]][2] == 8)  {
+    if (grid[coords[1]][coords[0]][2] == 9)  {
         setBlocks(grid, [], 2)
         active = false
         document.getElementById('state').innerHTML = 'Lose' // check lose
-    } else if (grid[coords[1]][coords[0]][2] != 8 && grid[coords[1]][coords[0]][2] != 0 && grid[coords[1]][coords[0]][3] == 0) {
+    } else if (grid[coords[1]][coords[0]][2] != 9 && grid[coords[1]][coords[0]][2] != 0 && grid[coords[1]][coords[0]][3] == 0) {
         grid[coords[1]][coords[0]][3] = 1
         flipped.push(coords)
     } else if (grid[coords[1]][coords[0]][3] == 0 && grid[coords[1]][coords[0]][3] == 0) {
@@ -252,7 +266,7 @@ function space(event, grid, flipped=[]) {
         }
         if (count == grid[coords[1]][coords[0]][2]) {
             for (const i of n) {
-                // if (grid[i[1]][i[0]][5] == 1 && grid[i[1]][i[0]][2] != 8) {
+                // if (grid[i[1]][i[0]][5] == 1 && grid[i[1]][i[0]][2] != 9) {
                 //     setBlocks(grid, [], 2)
                 //     active = false
                 //     document.getElementById('state').innerHTML = 'Lose' // trigger lose
