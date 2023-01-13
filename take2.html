@@ -34,13 +34,19 @@ let w = 30, h = 16; // dimensions of game area
 let num = 99; // number of mines
 let f = 0; // number of flipped squares
 let m = 0; // number of flagged mines remaining
-let active = true;
+let start = []; // first click
+let active = false;
 let mousePos = [0, 0]
-const g = startGrid()
+let g = []
 
 function startGame() {
     gameArea.start()
     setBlocks(g, [], 0)
+    if (active == true) {
+        g = startGrid()
+        setBlocks(g, [], 0)
+        return g
+    }
 }
 
 // function restartGame() {
@@ -126,11 +132,23 @@ function setBlocks(grid, flipped=[], start) {
 function setMines(n) {
     var count = 0
     const mines = {}
+    const neighbors = getNeighbors(start)
+    neighbors.push(start)
+    const neighbors_dict = {}
+    for (const i of neighbors) {
+        if (i[0] in neighbors_dict) {
+            neighbors_dict[i[0]].push(i[1])
+        } else {
+            neighbors_dict[i[0]] = [i[1]]
+        }
+    }
     while (count < n) {
         // var m = Math.floor(Math.random() * h*w) + 1;
         var x = Math.floor(Math.random() * w)
         var y = Math.floor(Math.random() * h)
-        if (! (x in mines)) {
+        if (x in neighbors_dict && neighbors_dict[x].includes(y)) {
+            continue
+        } else if (! (x in mines)) {
             mines[x] = [y]
             count += 1
         } else if (x in mines && ! (mines[x].includes(y))) {
@@ -152,10 +170,8 @@ function blankGrid() {
     for (let i = 0; i < h; i++) {
         grid.push([])
         for (let j = 0; j < w; j++) {
-            // var ix = i*h+j+1
             const coords = [j, i]
-            // document.write(coords)
-            if (mines[j].includes(i)) {
+            if (j in mines && mines[j].includes(i)) {
                 grid[i].push([j, i, 9, 0, 0, 0])
                 m += 1
             } else {
@@ -163,7 +179,6 @@ function blankGrid() {
             }
         }
     }
-    // document.write(grid)
     return grid
 }
 
@@ -209,21 +224,30 @@ function click(grid) {
     // updates the game visually using setBlocks, checks for win
     const coords = [mousePos[0], mousePos[1]]
 
-    if (grid[coords[1]][coords[0]][5] == 1) {
-    
-    } else if (active == true) {
-        const newGrid = updateGame(coords, grid)
-        setBlocks(newGrid[0], newGrid[1], 1)
-        if (f == h*w-num) {
-            setBlocks(newGrid[0], [], 2)
-            active = false
-            document.getElementById('state').innerHTML = 'Win'
-        }
+    if (active == false) {
+        start = [coords[0], coords[1]]
+        active = true
+        grid = startGame()
+        gameStep(coords, grid)
+    } else if (grid[coords[1]][coords[0]][5] == 1) {
+    } else {
+        gameStep(coords, grid)
+    }
+}
+
+function gameStep(coords, grid) {
+    const newGrid = updateGame(coords, grid)
+    setBlocks(newGrid[0], newGrid[1], 1)
+    if (f == h*w-num) { // check win
+        setBlocks(newGrid[0], [], 2)
+        active = false
+        document.getElementById('state').innerHTML = 'Win'
     }
 }
 
 function updateGame(coords, grid, flipped=[]) {
     // updates the grid given coordinates that are clicked
+    // document.write(grid)
     if (grid[coords[1]][coords[0]][2] == 9)  {
         setBlocks(grid, [], 2)
         active = false
@@ -272,7 +296,7 @@ function space(event, grid, flipped=[]) {
                 //     document.getElementById('state').innerHTML = 'Lose' // trigger lose
                 // } else 
                 if (grid[i[1]][i[0]][5] == 0) { // flips each surrounding square if not flagged
-                    newGrid = updateGame(i, grid)
+                    const newGrid = updateGame(i, grid)
                     grid = newGrid[0]
                     flipped = flipped.concat(newGrid[1])
                 }
